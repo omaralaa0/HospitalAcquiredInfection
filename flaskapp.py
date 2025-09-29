@@ -3,21 +3,28 @@ import numpy as np
 from flask_sqlalchemy import SQLAlchemy
 from models import db, Patient
 from flask import Flask, render_template, request, redirect, url_for, jsonify
-
+import os
+from dotenv import load_dotenv
 
 app = Flask(__name__)
 
-app.config['SQLALCHEMY_DATABASE_URI'] = "postgresql://postgres:161600@localhost:5432/SepsisDB"
+@app.template_filter('getattr')
+def getattr_filter(obj, attr, default=''):
+    return getattr(obj, attr, default)
+
+
+
+load_dotenv()
+
+app.config['SQLALCHEMY_DATABASE_URI'] = os.getenv("DATABASE_URL")
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 db.init_app(app)
 
-model = joblib.load("rfc_model.pkl")
-
+model = joblib.load("rfc_model_compressed.pkl")
 
 @app.route("/")
 def home():
     return render_template("form.html")
-
 
 @app.route("/predict", methods=["POST"])
 def predict():
@@ -51,7 +58,7 @@ def predict():
             except Exception:
                 pass
 
-        msg = "Patient has sepsis" if pred == 1 else "Patient does not have sepsis"
+        msg = "Patient has Hospital Acquired Infection" if pred == 1 else "Patient does not have HAI"
         if proba is not None:
             msg += f" (probability: {proba:.2%})"
 
@@ -76,7 +83,7 @@ def predict():
             platelets=float(request.form.get("Platelets")),
             hosp_adm_time=float(request.form.get("HospAdmTime")),
             iculos=float(request.form.get("ICULOS")),
-            prediction="Sepsis" if pred == 1 else "No Sepsis",
+            prediction="HAI" if pred == 1 else "No HAI",
             probability=proba
         )
         db.session.add(new_patient)
@@ -86,29 +93,38 @@ def predict():
 
     except Exception as e:
         return render_template("result.html", prediction=f"Error: {e}")
-    
 
-@app.route("/patients/<int:patient_id>", methods=["GET"])
-def get_patient(patient_id):
-    patient = Patient.query.get(patient_id)
-    if not patient:
-        return jsonify({"error": "Patient not found"}), 404
-    return jsonify({
-        "id": patient.id,
-        "name": patient.name,
-        "phone": patient.phone,
-        "address": patient.address,
-        "age": patient.age,
-        "gender": patient.gender,
-        "prediction": patient.prediction,
-        "probability": patient.probability
-    })
+
+@app.route("/patients")
+def patients():
+    all_patients = Patient.query.all()
+    return render_template("patients.html", patients=all_patients)
 
 
 @app.route("/patients/<int:patient_id>/edit", methods=["GET"])
 def edit_patient(patient_id):
     patient = Patient.query.get_or_404(patient_id)
-    return render_template("form.html", patient=patient)
+
+    field_map = {
+        "HR": "hr",
+        "O2Sat": "o2sat",
+        "Temp": "temp",
+        "MAP": "map",
+        "Resp": "resp",
+        "BUN": "bun",
+        "Chloride": "chloride",
+        "Creatinine": "creatinine",
+        "Glucose": "glucose",
+        "Hct": "hct",
+        "Hgb": "hgb",
+        "WBC": "wbc",
+        "Platelets": "platelets",
+        "Age": "age",
+        "HospAdmTime": "hosp_adm_time",
+        "ICULOS": "iculos"
+    }
+
+    return render_template("form.html", patient=patient, field_map=field_map)
 
 
 @app.route("/patients/<int:patient_id>/update", methods=["POST"])
@@ -139,6 +155,7 @@ def update_patient(patient_id):
     db.session.commit()
     return redirect(url_for("patients"))
 
+
 @app.route("/patients/<int:patient_id>", methods=["DELETE"])
 def delete_patient(patient_id):
     patient = Patient.query.get(patient_id)
@@ -153,35 +170,26 @@ def delete_patient(patient_id):
 @app.route("/stats", methods=["GET"])
 def get_stats():
     total = Patient.query.count()
-
     total_males = Patient.query.filter_by(gender="Male").count()
     total_females = Patient.query.filter_by(gender="Female").count()
 
-    sepsis = Patient.query.filter_by(prediction="Sepsis").count()
-    no_sepsis = total - sepsis
+    hai = Patient.query.filter_by(prediction="HAI").count()
+    no_hai = total - hai
 
-    male_sepsis = Patient.query.filter_by(gender="Male", prediction="Sepsis").count()
-    female_sepsis = Patient.query.filter_by(gender="Female", prediction="Sepsis").count()
+    male_hai = Patient.query.filter_by(gender="Male", prediction="HAI").count()
+    female_hai = Patient.query.filter_by(gender="Female", prediction="HAI").count()
 
     stats = {
         "total_patients": total,
         "total_males": total_males,
         "total_females": total_females,
-        "male_sepsis": male_sepsis,
-        "female_sepsis": female_sepsis,
-        "sepsis_cases": sepsis,
-        "non_sepsis_cases": no_sepsis,
+        "male_hai": male_hai,
+        "female_hai": female_hai,
+        "hai_cases": hai,
+        "non_hai_cases": no_hai,
     }
 
     return render_template("stats.html", stats=stats)
-
-
-
-
-@app.route("/patients")
-def patients():
-    all_patients = Patient.query.all()
-    return render_template("patients.html", patients=all_patients)
 
 
 if __name__ == "__main__":

@@ -37,13 +37,29 @@
             margin-top: 20px;
         }
     </style>
+        <style>
+        .navbar-lightgray {
+            background-color: #A8A8A8;
+            /* light gray */
+        }
+
+        .navbar-lightgray .nav-link {
+            color: #000;
+            /* dark text for contrast */
+        }
+
+        .navbar-lightgray .nav-link.active {
+            color: #007bff;
+            /* highlight active link */
+        }
+    </style>
 </head>
 
 <body>
-    <nav class="navbar navbar-expand-lg navbar-light bg-white shadow-sm mb-4">
+    <nav class="navbar navbar-expand-lg navbar-lightgray shadow-sm mb-4">
         <div class="container">
             <a class="navbar-brand" href="/">
-                <img src="{{ url_for('static', filename='logo.png') }}" alt="Cura Solve" height="60">
+                <img src="{{ url_for('static', filename='logo.png') }}" alt="Cura Solve" height="80">
             </a>
             <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav"
                 aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
@@ -75,20 +91,20 @@
                 <td>{{ stats.total_females }}</td>
             </tr>
             <tr>
-                <th>Male Patients with Sepsis</th>
-                <td>{{ stats.male_sepsis }}</td>
+                <th>Male Patients with HAI</th>
+                <td>{{ stats.male_hai }}</td>
             </tr>
             <tr>
-                <th>Female Patients with Sepsis</th>
-                <td>{{ stats.female_sepsis }}</td>
+                <th>Female Patients with HAI</th>
+                <td>{{ stats.female_hai }}</td>
             </tr>
             <tr>
-                <th>Sepsis Cases</th>
-                <td>{{ stats.sepsis_cases }}</td>
+                <th>HAI Cases</th>
+                <td>{{ stats.hai_cases }}</td>
             </tr>
             <tr>
-                <th>Non-Sepsis Cases</th>
-                <td>{{ stats.non_sepsis_cases }}</td>
+                <th>Non-HAI Cases</th>
+                <td>{{ stats.non_hai_cases }}</td>
             </tr>
         </table>
         <canvas id="statsChart"></canvas>
@@ -100,17 +116,17 @@
         new Chart(ctx, {
             type: 'bar',
             data: {
-                labels: ['Total Patients', 'Total Males', 'Total Females', 'Male Sepsis', 'Female Sepsis', 'Sepsis Cases', 'Non-Sepsis Cases'],
+                labels: ['Total Patients', 'Total Males', 'Total Females', 'Male HAI', 'Female HAI', 'HAI Cases', 'Non-HAI Cases'],
                 datasets: [{
                     label: 'Patient Data',
                     data: [
                         {{ stats.total_patients }},
                         {{ stats.total_males }},
                         {{ stats.total_females }},
-                        {{ stats.male_sepsis }},
-                        {{ stats.female_sepsis }},
-                        {{ stats.sepsis_cases }},
-                        {{ stats.non_sepsis_cases }}
+                        {{ stats.male_hai }},
+                        {{ stats.female_hai }},
+                        {{ stats.hai_cases }},
+                        {{ stats.non_hai_cases }}
                     ],
                     backgroundColor: ['#4e73df', '#1cc88a', '#36b9cc', '#f6c23e', '#e74a3b', '#858796', '#20c997']
                 }]
