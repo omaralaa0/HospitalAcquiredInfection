@@ -173,8 +173,8 @@ python-json-logger==3.3.0
 python-pptx==1.0.2
 pytz==2023.3
 # pywin32==308
-pywin32-ctypes==0.2.3
-pywinpty==2.0.15
+# pywin32-ctypes==0.2.3
+# pywinpty==2.0.15
 pyxnat==1.6.3
 PyYAML==6.0.2
 pyzmq==27.0.0
@@ -213,8 +213,9 @@ tensorboard-data-server==0.7.0
 tensorboard-plugin-wit==1.8.1
 tensorflow==2.12.0
 tensorflow-estimator==2.12.0
-tensorflow-intel==2.12.0
 tensorflow-io-gcs-filesystem==0.31.0
+# tensorflow-intel removed for Linux/Fly.io
+
 termcolor==2.3.0
 terminado==0.18.1
 thinc==8.0.17
